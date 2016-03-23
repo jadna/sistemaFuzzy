@@ -32,6 +32,9 @@ public class SistemaFuzzy {
     private static final int presAltaInf = 8;
     private static final int presAltaSup = 12;
     
+    //QUANTIDADE de intervalo a ser dividido o eixoX e o eixoY
+    private static final int intervalo = 500;
+    
 
     /*Regras de Inferência (9 regras)
 	 * {temperatura, volume, pressao}
@@ -154,7 +157,10 @@ public class SistemaFuzzy {
             vol = rulesInferencia[i][1];
             pressao = rulesInferencia[i][2];
         
-			
+		/*System.out.println("Temp: " + temp);	
+                System.out.println("Vol: " + vol);	
+                System.out.println("pressao: " + pressao);*/
+                
             switch(temp){
                 
                 case 0:
@@ -186,42 +192,99 @@ public class SistemaFuzzy {
                     System.out.println("Volume Grande: " + volPertinencia);
                     break;
             }
+            
+            /*Só ativa a regra quando as condições da temperatura e volume são satisfeitos
+            Neste caso pega o menor valor de pertinencia.*/	
+            //Como os antecedentes de todas as regras são compostos pelo operador E, escolhe-se a menor pertinência
+            if(tempPertinencia < volPertinencia){
+                presPertinencia = tempPertinencia;
+            }
+            else{
+		presPertinencia = volPertinencia;
+            }
 			
-			//Como os antecedentes de todas as regras são compostos pelo operador E, escolhe-se a menor pertinência
-			if(tempPertinencia < volPertinencia){
-				presPertinencia = tempPertinencia;
-			}
-			else{
-				presPertinencia = volPertinencia;
-			}
-			
-			switch(pressao){
-				case 0: 
-					pressaoMin = presBaixaInf;
-					pressaoMax = presBaixaSup;
-					System.out.println("Pressão Baixa: " + presPertinencia);
-					break;
-				case 1:
-					pressaoMin = presMediaaInf;
-					pressaoMax = presMediaaSup;
-					System.out.println("Pressão Média: " + presPertinencia);
-					break;
-				case 2:
-					pressaoMin = presAltaInf;
-					pressaoMax = presAltaSup;
-					System.out.println("Pressão Alta: " + presPertinencia );
-					break;
-			}
-			
-			regras[i][0] = presPertinencia;
-			regras[i][1] = pressaoMin;
-			regras[i][2] = pressaoMax;
-			
+            switch(pressao){
+                
+                case 0: 
+                    pressaoMin = presBaixaInf;
+                    pressaoMax = presBaixaSup;
+                    System.out.println("Pressão Baixa: " + presPertinencia);
+                    break;
+		case 1:
+                    pressaoMin = presMediaaInf;
+                    pressaoMax = presMediaaSup;
+                    System.out.println("Pressão Média: " + presPertinencia);
+                    break;
+		case 2:
+                    pressaoMin = presAltaInf;
+                    pressaoMax = presAltaSup;
+                    System.out.println("Pressão Alta: " + presPertinencia );
+                    break;
 		}
-		
-		return regras;
-		
+			
+			regras[i][0] = presPertinencia;//pega o valor da pressão
+			regras[i][1] = pressaoMin;//pega o limite da pressão o inferior
+			regras[i][2] = pressaoMax;//pega o limite da pressão superior
+                        System.out.println("Regras["+i+"][0]:" + regras[i][0]);
+                        System.out.println("Regras["+i+"][1]=>lim inferior:" + regras[i][1]);
+                        System.out.println("Regras["+i+"][2]=> lim superior:" + regras[i][2]);
+                        
+			
 	}
+		
+	return regras;
+		
+    }
+    
+    private static void inferencia(double regras[][]){
+        
+        double eixoX[] = new double [intervalo];;//armazena o valor do eixoX, que é a pressão
+        double eixoY[] = new double [intervalo];//Vai armazenar os valores das pertinencias para cada valor do eixoX
+        double inferior, superior, sum = 0, aux, pertPressao;//variaveis do limite superior e inferior da pressao e a soma
+        int i,j;
+        
+        
+        for(i = 0; i < intervalo; i++){
+            
+            eixoX[i] = sum;
+            
+            for(j = 0; j < regras.length; j++){
+                
+                inferior = regras[j][1];
+                superior = regras[j][2];
+                
+                if(sum >= inferior && sum <= superior){
+                    
+                    aux = regras[j][0];//a variavel auxiliar recebe o valor da pressão se atender as codições
+                    
+                    if(sum >= 4 && sum <= 8){//se a soma entra na validação do primeiro intervalo
+                        //calculo a pertinencia da pressão
+                        pertPressao = pertinenciaTrapezoidal(sum, inferior, superior, 4, 5);
+                        
+                    }
+                    
+                
+                }
+                
+                
+                
+                
+            
+            }
+        
+        }
+        
+        
+        
+
+        
+        
+        
+    
+    
+    
+    }
+    
     
 
     /**
@@ -231,13 +294,15 @@ public class SistemaFuzzy {
         // TODO code application logic here
         Scanner sc = new Scanner(System.in); 
         System.out.print("Insira a temperatura: ");
-        temperatura = sc.nextDouble();
+        //temperatura = sc.nextDouble();
+        temperatura = 965;
         System.out.print("Insira o volume: ");
-        volume = sc.nextDouble();
+        //volume = sc.nextDouble();
+        volume = 11;
         fuzzificacao();
+        double regrasAvaliadas[][] = regras();
         
 
     }
 }
     
-
