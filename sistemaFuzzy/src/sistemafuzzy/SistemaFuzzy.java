@@ -236,12 +236,14 @@ public class SistemaFuzzy {
 		
     }
     
-    private static void inferencia(double regras[][]){
+    private static double[] inferencia(double regras[][]){
         
         double eixoX[] = new double [intervalo];;//armazena o valor do eixoX, que é a pressão
         double eixoY[] = new double [intervalo];//Vai armazenar os valores das pertinencias para cada valor do eixoX
-        double inferior, superior, sum = 0, aux, pertPressao;//variaveis do limite superior e inferior da pressao e a soma
+        double inferior, superior, sum = 0, aux, aux1, pertPressao, incremento;//variaveis do limite superior e inferior da pressao e a soma
         int i,j;
+        
+        incremento = (double) ((presAltaSup - presBaixaInf)/intervalo);
         
         
         for(i = 0; i < intervalo; i++){
@@ -256,33 +258,52 @@ public class SistemaFuzzy {
                 if(sum >= inferior && sum <= superior){
                     
                     aux = regras[j][0];//a variavel auxiliar recebe o valor da pressão se atender as codições
+                    aux1 = aux;
                     
                     if(sum >= 4 && sum <= 8){//se a soma entra na validação do primeiro intervalo
                         //calculo a pertinencia da pressão
                         pertPressao = pertinenciaTrapezoidal(sum, inferior, superior, 4, 5);
                         
+                        if(pertPressao < aux){
+                            
+                            aux1 = pertPressao;
+                        }
+                        
+                    }
+                    if(sum >= 6 && sum <= 10){
+                    
+                        pertPressao = pertinenciaTriangular(sum, inferior, superior, 8);
+                        
+                        if(pertPressao < aux){
+                            
+                            aux1 = pertPressao;
+                        }
+                    }
+                    if(sum >= 8 && sum <= 12){//se a soma entra na validação do primeiro intervalo
+                        //calculo a pertinencia da pressão
+                        pertPressao = pertinenciaTrapezoidal(sum, inferior, superior, 11, 12);
+                        
+                        if(pertPressao < aux){
+                            
+                            aux1 = pertPressao;
+                        }
+                        
+                    }
+                    
+                    if(aux1 > eixoY[i]){
+			
+                        eixoY[i] = aux1;
                     }
                     
                 
                 }
-                
-                
-                
-                
-            
             }
-        
+            
+            sum += incremento;  
         }
         
+        return eixoY;
         
-        
-
-        
-        
-        
-    
-    
-    
     }
     
     
