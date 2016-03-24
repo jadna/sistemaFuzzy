@@ -16,6 +16,7 @@ public class SistemaFuzzy {
     // Valores da temperatura e volume
     private static double volume;
     private static double temperatura;
+    private static double pressao;
     //Valores de pertinencia de cada conjunto temperatura
     private static double tempBaixa;
     private static double tempMedia;
@@ -131,9 +132,9 @@ public class SistemaFuzzy {
 	System.out.println("Grau de pertinencia do volume ao conjunto 'volumeGrande': " + volGrande);
 		
     }
-    private static double[][] regras(){
+    private static double[][] selecaoRegras(){
 		
-        double regras[][];
+        double regrasAtivadas[][];
         // As pertinencias ao longo do eixo Y
         double tempPertinencia = 0;
         double volPertinencia = 0;
@@ -147,7 +148,7 @@ public class SistemaFuzzy {
         
         
         //9 regras, cada coluna armazena: [0] - pertinencia, [1] - limite inferior, [2] - limite superior
-        regras = new double[9][3];
+        regrasAtivadas = new double[9][3];
 	
         for(i = 0; i < rulesInferencia.length; i++){
             
@@ -222,42 +223,45 @@ public class SistemaFuzzy {
                     break;
 		}
 			
-			regras[i][0] = presPertinencia;//pega o valor da pressão
-			regras[i][1] = pressaoMin;//pega o limite da pressão o inferior
-			regras[i][2] = pressaoMax;//pega o limite da pressão superior
-                        System.out.println("Regras["+i+"][0]:" + regras[i][0]);
-                        System.out.println("Regras["+i+"][1]=>lim inferior:" + regras[i][1]);
-                        System.out.println("Regras["+i+"][2]=> lim superior:" + regras[i][2]);
-                        
-			
+            regrasAtivadas[i][0] = presPertinencia;//pega o valor da pressão
+            regrasAtivadas[i][1] = pressaoMin;//pega o limite da pressão o inferior
+            regrasAtivadas[i][2] = pressaoMax;//pega o limite da pressão superior
+            System.out.println("Regras["+i+"][0]=>:" + regrasAtivadas[i][0]);
+            System.out.println("Regras["+i+"][1]=>lim inferior:" + regrasAtivadas[i][1]);
+            System.out.println("Regras["+i+"][2]=> lim superior:" + regrasAtivadas[i][2]);
+                        		
 	}
 		
-	return regras;
+	return regrasAtivadas;
 		
     }
     
-    private static double[] inferencia(double regras[][]){
+    private static double[] agregacaoRegras(double regrasAtivadas[][]){
         
-        double eixoX[] = new double [intervalo];;//armazena o valor do eixoX, que é a pressão
+        double eixoX[] = new double [intervalo];//armazena o valor do eixoX, que é a pressão
         double eixoY[] = new double [intervalo];//Vai armazenar os valores das pertinencias para cada valor do eixoX
-        double inferior, superior, sum = 0, aux, aux1, pertPressao, incremento;//variaveis do limite superior e inferior da pressao e a soma
+        double inferior, superior, sum = 0;//variaveis do limite superior e inferior da pressao e a soma
+        double aux, aux1, pertPressao, incremento;
         int i,j;
         
-        incremento = (double) ((presAltaSup - presBaixaInf)/intervalo);
+        //System.out.println("presAltaSup: " + presAltaSup);
+        //System.out.println("presBaixaInf: " + presBaixaInf);
         
-        
+        incremento = (double) (presAltaSup - presBaixaInf)/intervalo;
+        //System.out.println("Incremento: " + incremento);
+                
         for(i = 0; i < intervalo; i++){
             
             eixoX[i] = sum;
             
-            for(j = 0; j < regras.length; j++){
+            for(j = 0; j < regrasAtivadas.length; j++){
                 
-                inferior = regras[j][1];
-                superior = regras[j][2];
+                inferior = regrasAtivadas[j][1];
+                superior = regrasAtivadas[j][2];
                 
                 if(sum >= inferior && sum <= superior){
                     
-                    aux = regras[j][0];//a variavel auxiliar recebe o valor da pressão se atender as codições
+                    aux = regrasAtivadas[j][0];//a variavel auxiliar recebe o valor da pressão se atender as codições
                     aux1 = aux;
                     
                     if(sum >= 4 && sum <= 8){//se a soma entra na validação do primeiro intervalo
@@ -294,16 +298,54 @@ public class SistemaFuzzy {
 			
                         eixoY[i] = aux1;
                     }
-                    
-                
                 }
             }
-            
-            sum += incremento;  
+  
+            sum += incremento; 
+            //System.out.println("Sum: " + sum);
         }
         
+        System.out.println("Eixo X" + " => " + "Eixo Y");
+        for(i = 0; i < intervalo; i++){
+		
+            System.out.println(eixoX[i] + " => " + eixoY[i]);
+        }
+     
         return eixoY;
+   
+    }
+    
+    private static double desfuzzificacao(double[] eixoY){
         
+        double[] eixoX = new double[intervalo];
+        double incremento, sum = 0, auxN = 0, auxD = 0, resultado = 0;
+        int i;
+        
+        incremento = (double) (presAltaSup - presBaixaInf)/intervalo;
+        
+        //Faz a desfuzzificacao utilizando o centroide
+        //Soma todo valor de x
+        for(i = 0; i < intervalo; i++){
+            
+            eixoX[i] = sum;
+            sum += incremento;
+            //System.out.println("SUM1: " + sum);
+            //System.out.println("EIXOX[i]1: " + eixoX[i]);
+            //System.out.println("INCREMENTO1: " + incremento);
+        }
+        //Depois multiplica o valor do eixoX pelo valor de pertinencia no caso eixoY.
+        for(i = 0; i < intervalo; i++){
+            
+            auxN += eixoX[i] * eixoY[i];
+            auxD += eixoY[i];
+            //System.out.println("Numerador: " + auxN);
+            //System.out.println("Denominador: " + auxD);        
+        }
+        
+        resultado = auxN/auxD;
+        //System.out.println("Resultado: " + resultado);
+        return resultado;
+    
     }
     
     
@@ -314,16 +356,30 @@ public class SistemaFuzzy {
     public static void main(String[] args) {
         // TODO code application logic here
         Scanner sc = new Scanner(System.in); 
-        System.out.print("Insira a temperatura: ");
+        //System.out.print("Insira a temperatura: ");
         //temperatura = sc.nextDouble();
+        System.out.println("Temperatura: " + temperatura);
         temperatura = 965;
-        System.out.print("Insira o volume: ");
+        //System.out.print("Insira o volume: ");
         //volume = sc.nextDouble();
+        System.out.println("Volume: " + volume);
         volume = 11;
+        
+        //Inicio
+        System.out.println("\nFuzificação");
         fuzzificacao();
-        double regrasAvaliadas[][] = regras();
+        
+        System.out.println("\nSeleção das Regras");
+        double regrasAvaliadas[][] = selecaoRegras();
+        
+        System.out.println("\nAgregacao das Regras");
+        double[] pertinenciasAgregadas = agregacaoRegras(regrasAvaliadas);
+        
+        System.out.println("\nDesfuzificacao");
+        pressao = desfuzzificacao(pertinenciasAgregadas);
+        System.out.println("Pressão = " + pressao);
+        
         
 
     }
 }
-    
